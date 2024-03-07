@@ -9,10 +9,13 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 public class GatewayApplication {
 
 	public static void main(String[] args) {
-		// Retrieve execution profile from environment variable. Otherwise, default profile is used.
+		// Recupera o perfil de execução da variável de ambiente. Caso contrário, usa o perfil padrão.
 		String profile = System.getenv("PROFILE");
-		System.setProperty("spring.profiles.active", profile != null ? profile : "default");
+		if (profile != null && !profile.isEmpty()) {
+			System.setProperty("spring.profiles.active", profile);
+		} else {
+			System.setProperty("spring.profiles.active", "default");
+		}
 		SpringApplication.run(GatewayApplication.class, args);
 	}
-
 }
