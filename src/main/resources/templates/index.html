@@ -1,0 +1,126 @@
+<html>
+<head>
+    <title>Heatmaps</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+
+</head>
+<body>
+<div id="floating-panel">
+    <button id="toggle-heatmap">Toggle Heatmap</button>
+    <button id="change-gradient">Change gradient</button>
+    <button id="change-radius">Change radius</button>
+    <button id="change-opacity">Change opacity</button>
+</div>
+<div id="map"></div>
+
+<script
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB4oSH_8oIusSaAyZRRPXkptJSgwTsPnvw&libraries=visualization&v=weekly"
+        defer
+></script>
+
+
+</body>
+</html>
+
+<script>
+
+
+    async function trazerDados() {
+        try {
+            const response = await fetch('http://localhost:8080/consultar', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`Erro ao trazer dados: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log(data);
+
+            function getPoints() {
+                const points = [];
+
+                for (const obj of data) {
+                    const { latitude, longitude } = obj;
+                    points.push(new google.maps.LatLng(latitude, longitude));
+                }
+                return points;
+            }
+
+            const points = getPoints();
+            initMap(points);
+        } catch (error) {
+            console.error('Erro ao trazer dados:', error);
+        }
+    }
+
+
+
+    function initMap(point) {
+        map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 16,
+            center: { lat: -23.558 , lng: -46.661 },
+            mapTypeId: "satellite",
+        });
+        heatmap = new google.maps.visualization.HeatmapLayer({
+            data: point,
+            map: map
+        });
+        document
+            .getElementById("toggle-heatmap")
+            .addEventListener("click", toggleHeatmap);
+        document
+            .getElementById("change-gradient")
+            .addEventListener("click", changeGradient);
+        document
+            .getElementById("change-opacity")
+            .addEventListener("click", changeOpacity);
+        document
+            .getElementById("change-radius")
+            .addEventListener("click", changeRadius);
+    }
+
+    function toggleHeatmap() {
+        heatmap.setMap(heatmap.getMap() ? null : map);
+    }
+
+    function changeGradient() {
+        const gradient = [
+            "rgba(0, 255, 255, 0)",
+            "rgba(0, 255, 255, 1)",
+            "rgba(0, 191, 255, 1)",
+            "rgba(0, 127, 255, 1)",
+            "rgba(0, 63, 255, 1)",
+            "rgba(0, 0, 255, 1)",
+            "rgba(0, 0, 223, 1)",
+            "rgba(0, 0, 191, 1)",
+            "rgba(0, 0, 159, 1)",
+            "rgba(0, 0, 127, 1)",
+            "rgba(63, 0, 91, 1)",
+            "rgba(127, 0, 63, 1)",
+            "rgba(191, 0, 31, 1)",
+            "rgba(255, 0, 0, 1)",
+        ];
+
+        heatmap.set("gradient", heatmap.get("gradient") ? null : gradient);
+    }
+
+    function changeRadius() {
+        heatmap.set("radius", heatmap.get("radius") ? null : 60);
+    }
+
+    function changeOpacity() {
+        heatmap.set("opacity", heatmap.get("opacity") ? null : 1);
+    }
+
+    // Chama a função trazerDados para obter os dados e inicializar o mapa
+    trazerDados();
+
+
+</script>
