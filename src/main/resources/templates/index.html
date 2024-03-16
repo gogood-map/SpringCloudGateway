@@ -26,7 +26,26 @@
 
 <script>
 
+    window.onload = initMap;
+    function initMap() {
+        // Configuração inicial do mapa
+        window.map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 16,
+            center: { lat: -23.5325011, lng: -46.4013353 },
+            mapTypeId: "satellite",
+        });
 
+        // Adiciona eventos aos botões antes de os dados estarem prontos
+        document.getElementById("toggle-heatmap").addEventListener("click", toggleHeatmap);
+        document.getElementById("change-gradient").addEventListener("click", changeGradient);
+        document.getElementById("change-opacity").addEventListener("click", changeOpacity);
+        document.getElementById("change-radius").addEventListener("click", changeRadius);
+
+        // Chama a função para trazer e plotar os dados
+        trazerDados();
+    }
+
+    // Função modificada para chamar a adição da camada de mapa de calor
     async function trazerDados() {
         try {
             const response = await fetch('http://52.226.122.160:8080/consultar/lista', {
@@ -41,50 +60,17 @@
             }
 
             const data = await response.json();
-            console.log(data);
 
-            function getPoints() {
-                const points = [];
+            // Converte os dados para o formato esperado pelo mapa de calor
+            const points = data.mapData.map(obj => new google.maps.LatLng(obj.latitude, obj.longitude));
+            console.log(points);
 
-                for (const obj of data.mapData) {
-                    const { latitude, longitude } = obj;
-                    points.push(new google.maps.LatLng(latitude, longitude));
-                }
-                return points;
-            }
+            // Chama a função para adicionar a camada de mapa de calor
+            addHeatmapLayer(points);
 
-            const points = getPoints();
-            initMap(points);
         } catch (error) {
             console.error('Erro ao trazer dados:', error);
         }
-    }
-
-
-
-    function initMap(point) {
-        map = new google.maps.Map(document.getElementById("map"), {
-            zoom: 16,
-            center: { lat: -23.5325011 , lng: -46.4013353 },
-            mapTypeId: "satellite",
-        });
-        heatmap = new google.maps.visualization.HeatmapLayer({
-            data: point,
-            maxIntensity: 3,
-            map: map
-        });
-        document
-            .getElementById("toggle-heatmap")
-            .addEventListener("click", toggleHeatmap);
-        document
-            .getElementById("change-gradient")
-            .addEventListener("click", changeGradient);
-        document
-            .getElementById("change-opacity")
-            .addEventListener("click", changeOpacity);
-        document
-            .getElementById("change-radius")
-            .addEventListener("click", changeRadius);
     }
 
     function toggleHeatmap() {
@@ -120,8 +106,26 @@
         heatmap.set("opacity", heatmap.get("opacity") ? null : 1);
     }
 
-    // Chama a função trazerDados para obter os dados e inicializar o mapa
-    trazerDados();
+    function addHeatmapLayer(points) {
+        if (window.heatmap) {
+            window.heatmap.setMap(null);
+        }
+
+        window.heatmap = new google.maps.visualization.HeatmapLayer({
+            data: points,
+            maxIntensity: 5,
+            map: window.map,
+        });
+
+
+        // Configurações adicionais do heatmap e eventos de UI
+        document.getElementById("toggle-heatmap").addEventListener("click", toggleHeatmap);
+        document.getElementById("change-gradient").addEventListener("click", changeGradient);
+        document.getElementById("change-radius").addEventListener("click", changeRadius);
+        document.getElementById("change-opacity").addEventListener("click", changeOpacity);
+    }
+
+
 
 
 </script>
