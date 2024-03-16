@@ -29,7 +29,7 @@
 
     async function trazerDados() {
         try {
-            const response = await fetch('https://spring-cloud-gateway-production-c119.up.railway.app/consultar', {
+            const response = await fetch('http://52.226.122.160:8080/consultar/lista', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -46,7 +46,7 @@
             function getPoints() {
                 const points = [];
 
-                for (const obj of data) {
+                for (const obj of data.mapData) {
                     const { latitude, longitude } = obj;
                     points.push(new google.maps.LatLng(latitude, longitude));
                 }
@@ -65,7 +65,7 @@
     function initMap(point) {
         map = new google.maps.Map(document.getElementById("map"), {
             zoom: 16,
-            center: { lat: -23.558 , lng: -46.661 },
+            center: { lat: -23.5325011 , lng: -46.4013353 },
             mapTypeId: "satellite",
         });
         heatmap = new google.maps.visualization.HeatmapLayer({
