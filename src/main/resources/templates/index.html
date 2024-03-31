@@ -68,12 +68,24 @@
 
 
     // Função para salvar dados no IndexedDB
-    async function saveDataToIndexedDB(data) {
+    async function saveDataToIndexedDB(newPoints) {
         const db = await openDatabase();
         const tx = db.transaction("data", "readwrite");
         const store = tx.objectStore("data");
-        store.put({ id: "dadosMapa", value: data });
+        const request = store.get("dadosMapa");
+
+        request.onsuccess = async function(event) {
+            // Verifica se já existem dados salvos e os mescla com os novos pontos
+            let existingData = request.result ? request.result.value : [];
+            let updatedData = existingData.concat(newPoints);
+            store.put({ id: "dadosMapa", value: updatedData });
+        };
+
+        request.onerror = function(event) {
+            console.error("Erro ao buscar dados existentes no IndexedDB", event.target.errorCode);
+        };
     }
+
 
     // Função para buscar dados no IndexedDB
     async function getDataFromIndexedDB() {
@@ -103,13 +115,13 @@
 
     let todosPoints = [];
     async function lazyLoad(){
-        for (let i = 1; i <= 45; i++) {
+        for (let i = 1; i <= 9; i++) {
             await trazerDados(i);
         }
     }
     async function trazerDados(i) {
         try {
-            const response = await fetch('http://localhost:8080/consultar/lista'+ i.toString(), {
+            const response = await fetch('http://52.226.122.160:8080/consultar/lista'+ i.toString(), {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,7 +139,7 @@
             todosPoints = todosPoints.concat(points);
 
             // Salva os dados no IndexedDB para uso futuro
-            await saveDataToIndexedDB(data.mapData);
+            await saveDataToIndexedDB(todosPoints);
             addHeatmapLayer(points);
 
         } catch (error) {
