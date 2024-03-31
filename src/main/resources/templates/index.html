@@ -28,7 +28,7 @@
     window.onload = initMap;
     async function initMap() {
         window.map = new google.maps.Map(document.getElementById("map"), {
-            zoom: 16,
+            zoom: 7,
             center: {lat: -23.5325011, lng: -46.4013353},
             mapTypeId: "satellite",
         });
@@ -90,7 +90,7 @@
                 addHeatmapLayer(pointsIndex);
             } else {
                 console.log("Dados não encontrados no IndexedDB, buscando do endpoint");
-                await trazerDados();
+                await lazyLoad();
             }
         };
 
@@ -101,10 +101,15 @@
 
 
 
-    // Função modificada para chamar a adição da camada de mapa de calor
-    async function trazerDados() {
+    let todosPoints = [];
+    async function lazyLoad(){
+        for (let i = 1; i <= 45; i++) {
+            await trazerDados(i);
+        }
+    }
+    async function trazerDados(i) {
         try {
-            const response = await fetch('http://52.226.122.160:8080/consultar/lista', {
+            const response = await fetch('http://localhost:8080/consultar/lista'+ i.toString(), {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -119,6 +124,7 @@
 
             // Converte os dados para o formato esperado pelo mapa de calor
             const points = data.mapData.map(obj => new google.maps.LatLng(obj.latitude, obj.longitude));
+            todosPoints = todosPoints.concat(points);
 
             // Salva os dados no IndexedDB para uso futuro
             await saveDataToIndexedDB(data.mapData);
@@ -165,14 +171,14 @@
 
     function addHeatmapLayer(points) {
         if (window.heatmap) {
-            window.heatmap.setMap(null);
+            window.heatmap.setData(todosPoints);
+        } else {
+            window.heatmap = new google.maps.visualization.HeatmapLayer({
+                data: points,
+                maxIntensity: 5,
+                map: window.map,
+            });
         }
-
-        window.heatmap = new google.maps.visualization.HeatmapLayer({
-            data: points,
-            maxIntensity: 5,
-            map: window.map,
-        });
 
 
         // Configurações adicionais do heatmap e eventos de UI
