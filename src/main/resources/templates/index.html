@@ -28,10 +28,18 @@
     window.onload = initMap;
     async function initMap() {
         window.map = new google.maps.Map(document.getElementById("map"), {
-            zoom: 7,
+            zoom: 17,
             center: {lat: -23.5325011, lng: -46.4013353},
             mapTypeId: "satellite",
         });
+
+        google.maps.event.addListener(window.map, 'center_changed', function() {
+            window.setTimeout(() => {
+                getMapCenter();
+            }, 3000);
+        });
+
+
 
         // Adiciona eventos aos botões antes de os dados estarem prontos
         document.getElementById("toggle-heatmap").addEventListener("click", toggleHeatmap);
@@ -40,7 +48,9 @@
         document.getElementById("change-radius").addEventListener("click", changeRadius);
 
         // Chama a função para trazer e plotar os dados
-        await lazyLoad();
+        const lat = map.getCenter().lat();
+        const lon = map.getCenter().lng();
+        await trazerDados(lat, lon);
     }
 
     // function openDatabase() {
@@ -108,9 +118,17 @@
             await trazerDados(i);
         }
     }
-    async function trazerDados(i) {
+
+
+    async function getMapCenter(){
+        const lat = map.getCenter().lat();
+        const lon = map.getCenter().lng();
+        await trazerDados(lat, lon);
+    }
+
+    async function trazerDados(lat, long) {
         try {
-            const response = await fetch('http://52.226.122.160:8080/consultar/lista'+ i.toString(), {
+            const response = await fetch('http://localhost:8080/consultar/local/' + lat + "/" + long, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
