@@ -28,16 +28,16 @@
     window.onload = initMap;
     async function initMap() {
         window.map = new google.maps.Map(document.getElementById("map"), {
-            zoom: 17,
+            zoom: 7,
             center: {lat: -23.5325011, lng: -46.4013353},
             mapTypeId: "satellite",
         });
 
-        google.maps.event.addListener(window.map, 'center_changed', function() {
-            window.setTimeout(() => {
-                getMapCenter();
-            }, 3000);
-        });
+        // google.maps.event.addListener(window.map, 'center_changed', function() {
+        //     window.setTimeout(() => {
+        //         getMapCenter();
+        //     }, 3000);
+        // });
 
 
 
@@ -50,7 +50,7 @@
         // Chama a função para trazer e plotar os dados
         const lat = map.getCenter().lat();
         const lon = map.getCenter().lng();
-        await trazerDados(lat, lon);
+        await lazyLoad();
     }
 
     // function openDatabase() {
@@ -113,22 +113,38 @@
 
     let todosPoints = []
     // let teste = []
-    async function lazyLoad(){
+    async function lazyLoad() {
+        // Cria um array de promessas para cada uma das partes que você quer requisitar
+        const promises = [];
         for (let i = 1; i <= 45; i++) {
-            await trazerDados(i);
+            // Adiciona a promessa de trazerDados ao array sem chamar await aqui
+            promises.push(trazerDados(i));
         }
+
+        // Espera todas as promessas serem resolvidas de uma vez
+        await Promise.all(promises);
     }
 
+
+    let latCache;
+    let lonCache;
 
     async function getMapCenter(){
-        const lat = map.getCenter().lat();
-        const lon = map.getCenter().lng();
-        await trazerDados(lat, lon);
+        if (map.getCenter().lat() === latCache && latCache != null){
+            return;
+        } else if (map.getCenter().lng() === lonCache && lonCache != null){
+            return;
+        } else {
+            latCache = map.getCenter().lat();
+            lonCache = map.getCenter().lng();
+            await trazerDados(latCache, lonCache);
+        }
+
     }
 
-    async function trazerDados(lat, long) {
+    async function trazerDados(i) {
         try {
-            const response = await fetch('http://localhost:8080/consultar/local/' + lat + "/" + long, {
+            const response = await fetch('http://localhost:8080/consultar/parte:lista' + i, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
